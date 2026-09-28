@@ -74,6 +74,23 @@ async function renderShowcase() {
 
 renderShowcase();
 
+const launchLiveDemo = document.querySelector("#launch-live-demo");
+if (launchLiveDemo) {
+  const stage = document.querySelector("#live-demo-stage");
+  const launchCard = stage.firstElementChild;
+  const collapse = document.querySelector("#collapse-live-demo");
+  launchLiveDemo.addEventListener("click", () => {
+    const template = document.querySelector("#live-demo-template");
+    stage.replaceChildren(template.content.cloneNode(true));
+    collapse.hidden = false;
+  });
+  collapse.addEventListener("click", () => {
+    stage.replaceChildren(launchCard);
+    collapse.hidden = true;
+    launchLiveDemo.focus();
+  });
+}
+
 function renderDynamicsComparison() {
   const root = document.querySelector("#dynamics-compare-grid");
   const toggle = document.querySelector("#dynamics-compare-toggle");

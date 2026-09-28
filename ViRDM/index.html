@@ -6,7 +6,7 @@
   <meta name="description" content="ViRDM removes the online teacher and critic from few-step causal video post-training by matching fixed representation distributions.">
   <meta name="theme-color" content="#fffaf5">
   <title>ViRDM — Few-Step Causal Video Generation</title>
-  <link rel="stylesheet" href="assets/css/site.css?v=59">
+  <link rel="stylesheet" href="assets/css/site.css?v=60">
 </head>
 <body>
   <aside class="floating-toc" aria-label="Page contents">
@@ -15,16 +15,17 @@
       <div class="floating-toc-progress" aria-hidden="true"><i id="toc-progress"></i></div>
       <a href="#top" data-section="top"><span>01</span><strong>Title</strong></a>
       <a href="#showcase" data-section="showcase"><span>02</span><strong>Showcase</strong></a>
-      <a href="#motivation" data-section="motivation"><span>03</span><strong>Motivation</strong></a>
-      <a href="#challenges" data-section="challenges"><span>04</span><strong>Challenges</strong></a>
-      <a href="#rdm-objective" data-section="rdm-objective"><span>05</span><strong>ViRDM Objective</strong></a>
-      <a href="#efficient-training" data-section="efficient-training"><span>06</span><strong>Efficient Training</strong></a>
-      <a href="#video-recipe" data-section="video-recipe"><span>07</span><strong>Video Recipe</strong></a>
-      <a href="#motion-enhancement" data-section="motion-enhancement"><span>08</span><strong>Motion Enhancement</strong></a>
-      <a href="#results" data-section="results"><span>09</span><strong>Main Results</strong></a>
-      <a href="#beyond-causal-4-step" data-section="beyond-causal-4-step"><span>10</span><strong>Beyond Four Steps</strong></a>
-      <a href="#references" data-section="references"><span>11</span><strong>References</strong></a>
-      <a href="#cite" data-section="cite"><span>12</span><strong>Cite</strong></a>
+      <a href="#demo" data-section="demo"><span>03</span><strong>Live Demo</strong></a>
+      <a href="#motivation" data-section="motivation"><span>04</span><strong>Motivation</strong></a>
+      <a href="#challenges" data-section="challenges"><span>05</span><strong>Challenges</strong></a>
+      <a href="#rdm-objective" data-section="rdm-objective"><span>06</span><strong>ViRDM Objective</strong></a>
+      <a href="#efficient-training" data-section="efficient-training"><span>07</span><strong>Efficient Training</strong></a>
+      <a href="#video-recipe" data-section="video-recipe"><span>08</span><strong>Video Recipe</strong></a>
+      <a href="#motion-enhancement" data-section="motion-enhancement"><span>09</span><strong>Motion Enhancement</strong></a>
+      <a href="#results" data-section="results"><span>10</span><strong>Main Results</strong></a>
+      <a href="#beyond-causal-4-step" data-section="beyond-causal-4-step"><span>11</span><strong>Beyond Four Steps</strong></a>
+      <a href="#references" data-section="references"><span>12</span><strong>References</strong></a>
+      <a href="#cite" data-section="cite"><span>13</span><strong>Cite</strong></a>
     </div>
   </aside>
 
@@ -55,6 +56,7 @@
       <p class="authors-note"><sup>&dagger;</sup> Equal advising · Technical Report</p>
       <div class="hero-actions" aria-label="Project links">
         <a class="button button-primary" href="#showcase">See showcase</a>
+        <a class="button" href="#demo">Live demo ↗</a>
         <a class="button" href="https://arxiv.org/abs/2609.28923" target="_blank" rel="noreferrer">Paper ↗</a>
         <a class="button" href="https://github.com/neu-vi/ViRDM" target="_blank" rel="noreferrer">Code ↗</a>
         <a class="button" href="https://huggingface.co/cr8br0ze/ViRDM" target="_blank" rel="noreferrer">Models ↗</a>
@@ -92,6 +94,41 @@
         </div>
         <div class="showcase-grid" id="showcase-grid"></div>
         <button class="showcase-toggle" id="showcase-toggle" type="button" aria-expanded="false">Show all 30</button>
+      </div>
+    </section>
+
+    <section class="live-demo-section" id="demo" aria-labelledby="live-demo-title">
+      <div class="shell">
+        <div class="live-demo-head">
+          <p class="section-index">Live demo</p>
+          <h2 id="live-demo-title">Generate a video in four steps.</h2>
+          <p class="live-demo-copy">Enter a prompt and try ViRDM's four-step causal video generator, post-trained with Representation Distribution Matching.</p>
+        </div>
+        <div class="live-demo-panel">
+          <div class="live-demo-toolbar">
+            <span><i aria-hidden="true"></i>ViRDM · 4-step causal video</span>
+            <div class="live-demo-tools">
+              <button id="collapse-live-demo" type="button" hidden>Collapse demo</button>
+              <a href="https://huggingface.co/spaces/cr8br0ze/ViRDM" target="_blank" rel="noopener noreferrer">Open in Hugging Face ↗</a>
+            </div>
+          </div>
+          <div class="live-demo-stage" id="live-demo-stage">
+            <div class="live-demo-launch">
+              <button class="button button-primary" id="launch-live-demo" type="button">▶ Launch live demo</button>
+              <p>Choose a prompt. Make it move.</p>
+            </div>
+          </div>
+          <template id="live-demo-template">
+            <iframe
+              class="live-demo-frame"
+              src="https://cr8br0ze-virdm.hf.space/"
+              title="ViRDM live demo: generate a video from a text prompt"
+              allow="autoplay; fullscreen"
+              allowfullscreen
+            ></iframe>
+          </template>
+        </div>
+        <p class="live-demo-note">Powered by Hugging Face ZeroGPU. If the demo is waking up or does not load here, <a href="https://huggingface.co/spaces/cr8br0ze/ViRDM" target="_blank" rel="noopener noreferrer">open it in Hugging Face</a>.</p>
       </div>
     </section>
 
@@ -625,6 +662,6 @@
     <div class="shell"><strong>ViRDM</strong></div>
   </footer>
   <script src="assets/data/demos.js"></script>
-  <script src="assets/js/site.js?v=27"></script>
+  <script src="assets/js/site.js?v=28"></script>
 </body>
 </html>
