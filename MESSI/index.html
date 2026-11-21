@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MESSI: Multi-Expert Soccer Skill Integration</title>
+<meta name="description" content="MESSI consolidates eight independently trained soccer experts into one physics-based controller, then adapts it to hand off between skills while preserving each skill.">
+<!-- TODO(deploy): make og:image an absolute URL once the page has a home (e.g. https://<user>.github.io/messi/assets/img/teaser_chain.jpg). -->
+<meta property="og:title" content="MESSI: Multi-Expert Soccer Skill Integration">
+<meta property="og:description" content="Eight soccer skills, one physics-based controller.">
+<meta property="og:image" content="assets/img/teaser_chain.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%BD%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<script>document.documentElement.classList.add("js")</script>
+<script src="assets/js/main.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- ============ NAV ============ -->
+<nav class="nav" aria-label="Sections">
+  <div class="wrap">
+    <a class="brand" href="#top">MESSI</a>
+    <ul class="nav-links">
+      <li><a href="#skills">Skills</a></li>
+      <li><a href="#shooting">Shooting</a></li>
+      <li><a href="#long">Long horizon</a></li>
+      <li><a href="#chain">Chaining</a></li>
+      <li><a href="#method">Method</a></li>
+      <li><a href="#transitions">Transitions</a></li>
+      <li><a href="#results">Results</a></li>
+      <li><a href="#citation">Citation</a></li>
+    </ul>
+    <!-- TODO(paper): set href to the paper and drop is-soon / aria-disabled -->
+    <a class="btn btn-primary is-soon" aria-disabled="true">Paper</a>
+  </div>
+</nav>
+
+<main id="main">
+
+<!-- ============ HERO ============ -->
+<header class="hero" id="top">
+  <div class="wrap-mid">
+    <p class="eyebrow"><b>MESSI</b> &nbsp;·&nbsp; Multi-Expert Soccer Skill Integration</p>
+    <h1 class="hx">Eight soccer skills.<br>One controller.</h1>
+    <p class="lede">We consolidate eight independently trained soccer experts into a single
+      physics-based policy, then teach it to hand off between skills
+      <b>without forgetting any of them.</b></p>
+
+    <!-- TODO(authors): names, links, affiliations, venue -->
+    <p class="authors">
+      <a href="https://xiaogangpeng.github.io/" target="_blank">Xiaogang Peng<sup>1*</sup></a> &nbsp;·&nbsp; <a href="https://www.linkedin.com/in/jiaqi-zou-35a391321/" target="_blank">Jiaqi Zou<sup>2*</sup></a> &nbsp;·&nbsp; <a href="https://zhongleilz.github.io/" target="_blank">Lei Zhong<sup>3</sup></a> &nbsp;·&nbsp; <a href="https://sirui-xu.github.io/" target="_blank">Sirui Xu<sup>4</sup></a> &nbsp;·&nbsp; <a href="https://jianghz.me/" target="_blank">Huaizu Jiang<sup>1</sup></a>
+      <span class="aff"><sup>1</sup>Northeastern University &nbsp;&nbsp; <sup>2</sup>Duke University &nbsp;&nbsp; <sup>3</sup>University of Edinburgh &nbsp;&nbsp; <sup>4</sup>University of Illinois at Urbana-Champaign</span>
+       <span class="aff">* Equal contribution </span>
+    </p>
+
+    <div class="btn-row">
+      <!-- TODO(links): add href and remove is-soon / aria-disabled / the "Soon" tag as each goes live -->
+      <a class="btn btn-primary is-soon" aria-disabled="true">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M5 2.5h6.5L15.5 6.5v11H5z"/><path d="M11.5 2.5v4h4M7.5 10.5h5M7.5 13.5h5"/></svg>
+        Paper <span class="soon">Soon</span></a>
+      <a class="btn is-soon" aria-disabled="true">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 4.5h12M4 10h12M4 15.5h7"/></svg>
+        arXiv <span class="soon">Soon</span></a>
+      <a class="btn is-soon" aria-disabled="true">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 6 3 10l4 4M13 6l4 4-4 4"/></svg>
+        Code <span class="soon">Soon</span></a>
+      <a class="btn" href="#citation">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 5.5h5v5H6.5c0 2 1 3 2.5 3.5M11 5.5h5v5h-2.5c0 2 1 3 2.5 3.5"/></svg>
+        BibTeX</a>
+    </div>
+  </div>
+
+  <div class="wrap hero-media">
+    <div class="vbox lg">
+      <video id="hero-video" muted loop playsinline preload="auto"
+             poster="media/hero/montage.jpg" data-src="media/hero/montage.mp4"
+             aria-label="Montage of the eight skills"></video>
+      <button class="ctrl" type="button" aria-controls="hero-video" aria-label="Pause video">
+        <svg class="i-pause" viewBox="0 0 16 16" fill="currentColor"><rect x="3.5" y="2.5" width="3" height="11" rx="1"/><rect x="9.5" y="2.5" width="3" height="11" rx="1"/></svg>
+        <svg class="i-play" viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 2.8v10.4a.8.8 0 0 0 1.2.7l8.2-5.2a.8.8 0 0 0 0-1.4L5.7 2.1a.8.8 0 0 0-1.2.7z"/></svg>
+      </button>
+    </div>
+    <!-- data-t = segment start in seconds; regenerate with build_media.py (media/hero/segments.json) -->
+    <ul class="chips" aria-label="Jump to a skill in the montage" data-chips-for="hero-video">
+      <li><button class="chip" type="button" data-t="0">Off-ball</button></li>
+      <li><button class="chip" type="button" data-t="3.5">Dribble</button></li>
+      <li><button class="chip" type="button" data-t="7">Stop &amp; turn</button></li>
+      <li><button class="chip" type="button" data-t="10.5">Shoot</button></li>
+      <li><button class="chip" type="button" data-t="14.18">Pass</button></li>
+      <li><button class="chip" type="button" data-t="16.46">Trap</button></li>
+      <li><button class="chip" type="button" data-t="17.9">Header</button></li>
+      <li><button class="chip" type="button" data-t="19.9">Get up</button></li>
+    </ul>
+  </div>
+</header>
+
+<!-- ============ AT A GLANCE ============ -->
+<section class="sec band" aria-labelledby="glance-h">
+  <div class="wrap-mid">
+    <h2 class="sr" id="glance-h">At a glance</h2>
+    <div class="stats">
+      <div class="stat reveal">
+        <p class="stat-n">8</p>
+        <p class="stat-k">experts</p>
+        <p class="stat-t">One per skill, each trained with its own motion prior, task reward and curriculum.</p>
+      </div>
+      <div class="stat reveal">
+        <p class="stat-n">1</p>
+        <p class="stat-k">student</p>
+        <p class="stat-t">A skill-conditioned transformer, distilled from all eight through one observation space.</p>
+      </div>
+      <div class="stat reveal">
+        <p class="stat-n">+1</p>
+        <p class="stat-k">adapter</p>
+        <p class="stat-t">A gated, shared low-rank adapter on the frozen student that learns the handoffs between skills.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SKILLS ============ -->
+<section class="sec" id="skills" aria-labelledby="skills-h">
+  <div class="wrap">
+    <div class="head reveal">
+      <p class="eyebrow">The repertoire</p>
+      <h2 class="h2" id="skills-h">Eight skills. One policy.</h2>
+      <p class="lede">Off the ball, on the ball, in the air, and back on your feet.
+        Every clip is physics simulation, played back in real time. Click any clip to enlarge it.</p>
+    </div>
+
+    <div class="grid g4">
+      <article class="card reveal">
+        <button class="vbox" type="button" aria-label="Enlarge: Off-ball movement">
+          <video muted loop playsinline preload="none" poster="media/skills/offball.jpg" data-src="media/skills/offball.mp4"></video>
+          <span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span>
+        </button>
+        <h3>Off-ball movement</h3>
+        <p>Runs, cuts and turns to a commanded direction and speed, without the ball.</p>
+      </article>
+
+      <article class="card reveal">
+        <button class="vbox" type="button" aria-label="Enlarge: Dribbling">
+          <video muted loop playsinline preload="none" poster="media/skills/dribble.jpg" data-src="media/skills/dribble.mp4"></video>
+          <span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span>
+        </button>
+        <h3>Dribbling</h3>
+        <p>Keeps the ball close while following a commanded direction and speed.</p>
+      </article>
+
+      <article class="card reveal">
+        <button class="vbox" type="button" aria-label="Enlarge: Stop and turn">
+          <video muted loop playsinline preload="none" poster="media/skills/stop_1.jpg" data-src="media/skills/stop_1.mp4"></video>
+          <span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span>
+        </button>
+        <h3>Stop and turn</h3>
+        <p>Stops the ball under the sole mid-dribble, then turns 180°.</p>
+        <div class="variants" role="group" aria-label="Stop and turn clips">
+          <button type="button" aria-pressed="true" data-src="media/skills/stop_1.mp4" data-poster="media/skills/stop_1.jpg">1</button>
+          <button type="button" aria-pressed="false" data-src="media/skills/stop_2.mp4" data-poster="media/skills/stop_2.jpg">2</button>
+        </div>
+      </article>
+
+      <article class="card reveal">
+        <button class="vbox" type="button" aria-label="Enlarge: Shooting">
+          <video muted loop playsinline preload="none" poster="media/shoot/R_instep_high.jpg" data-src="media/shoot/R_instep_high.mp4"></video>
+          <span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span>
+        </button>
+        <h3>Shooting</h3>
+        <p>Strikes with the commanded foot and technique, at a commanded direction and power.</p>
+        <div class="variants" role="group" aria-label="Shooting clips">
+          <button type="button" aria-pressed="true" data-src="media/shoot/R_instep_high.mp4" data-poster="media/shoot/R_instep_high.jpg">Right instep</button>
+          <button type="button" aria-pressed="false" data-src="media/shoot/L_inside_low.mp4" data-poster="media/shoot/L_inside_low.jpg">Left inside</button>
+        </div>
+      </article>
+
+      <article class="card reveal">
+        <button class="vbox" type="button" aria-label="Enlarge: Passing">
+          <video muted loop playsinline preload="none" poster="media/skills/pass_ground.jpg" data-src="media/skills/pass_ground.mp4"></video>
+          <span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span>
+        </button>
+        <h3>Passing</h3>
+        <p>Plays ground and lofted passes at a commanded direction and power.</p>
+        <div class="variants" role="group" aria-label="Passing clips">
+          <button type="button" aria-pressed="true" data-src="media/skills/pass_ground.mp4" data-poster="media/skills/pass_ground.jpg">Ground</button>
+          <button type="button" aria-pressed="false" data-src="media/skills/pass_lofted.mp4" data-poster="media/skills/pass_lofted.jpg">Lofted</button>
+        </div>
+      </article>
+
+      <article class="card reveal">
+        <button class="vbox" type="button" aria-label="Enlarge: Trapping">
+          <video muted loop playsinline preload="none" poster="media/skills/trap_chest.jpg" data-src="media/skills/trap_chest.mp4"></video>
+          <span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span>
+        </button>
+        <h3>Trapping</h3>
+        <p>Controls an incoming ball on the first touch, with the chest or the foot.</p>
+        <div class="variants" role="group" aria-label="Trapping clips">
+          <button type="button" aria-pressed="true" data-src="media/skills/trap_chest.mp4" data-poster="media/skills/trap_chest.jpg">Chest</button>
+          <button type="button" aria-pressed="false" data-src="media/skills/trap_foot.mp4" data-poster="media/skills/trap_foot.jpg">Foot</button>
+        </div>
+      </article>
+
+      <article class="card reveal">
+        <button class="vbox" type="button" aria-label="Enlarge: Heading">
+          <video muted loop playsinline preload="none" poster="media/skills/header_1.jpg" data-src="media/skills/header_1.mp4"></video>
+          <span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span>
+        </button>
+        <h3>Heading</h3>
+        <p>Meets a ball in the air with the head.</p>
+        <div class="variants" role="group" aria-label="Heading clips">
+          <button type="button" aria-pressed="true" data-src="media/skills/header_1.mp4" data-poster="media/skills/header_1.jpg">1</button>
+          <button type="button" aria-pressed="false" data-src="media/skills/header_2.mp4" data-poster="media/skills/header_2.jpg">2</button>
+        </div>
+      </article>
+
+      <article class="card reveal">
+        <button class="vbox" type="button" aria-label="Enlarge: Getting up">
+          <video muted loop playsinline preload="none" poster="media/skills/getup_1.jpg" data-src="media/skills/getup_1.mp4"></video>
+          <span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span>
+        </button>
+        <h3>Getting up</h3>
+        <p>Recovers to standing after a fall.</p>
+        <div class="variants" role="group" aria-label="Getting up clips">
+          <button type="button" aria-pressed="true" data-src="media/skills/getup_1.mp4" data-poster="media/skills/getup_1.jpg">1</button>
+          <button type="button" aria-pressed="false" data-src="media/skills/getup_2.mp4" data-poster="media/skills/getup_2.jpg">2</button>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SHOOTING ============ -->
+<section class="sec band" id="shooting" aria-labelledby="shoot-h">
+  <div class="wrap">
+    <div class="head reveal">
+      <p class="eyebrow">Shooting</p>
+      <h2 class="h2" id="shoot-h">Pick a foot. Pick a corner.</h2>
+      <p class="lede">Each shot follows a commanded foot, technique, direction and power.
+        The overlay compares the commanded target with the ball's actual speed and direction.</p>
+    </div>
+
+    <div class="seg-wrap">
+      <div class="seg" role="tablist" aria-label="Shot sets">
+        <button role="tab" type="button" aria-selected="true" aria-controls="shoot-tech" id="tab-tech">Technique</button>
+        <button role="tab" type="button" aria-selected="false" aria-controls="shoot-corner" id="tab-corner" tabindex="-1">Corners</button>
+        <button role="tab" type="button" aria-selected="false" aria-controls="shoot-more" id="tab-more" tabindex="-1">More shots</button>
+      </div>
+    </div>
+
+    <!-- foot x technique x height -->
+    <div class="grid g4 dense" id="shoot-tech" role="tabpanel" aria-labelledby="tab-tech">
+      <figure class="tile"><button class="vbox" type="button" aria-label="Enlarge: Left foot, inside, high"><video muted loop playsinline preload="none" poster="media/shoot/L_inside_high.jpg" data-src="media/shoot/L_inside_high.mp4"></video><span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span></button><figcaption>Left foot · Inside · High</figcaption></figure>
+      <figure class="tile"><button class="vbox" type="button" aria-label="Enlarge: Left foot, inside, low"><video muted loop playsinline preload="none" poster="media/shoot/L_inside_low.jpg" data-src="media/shoot/L_inside_low.mp4"></video><span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span></button><figcaption>Left foot · Inside · Low</figcaption></figure>
+      <figure class="tile"><button class="vbox" type="button" aria-label="Enlarge: Left foot, instep, high"><video muted loop playsinline preload="none" poster="media/shoot/L_instep_high.jpg" data-src="media/shoot/L_instep_high.mp4"></video><span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span></button><figcaption>Left foot · Instep · High</figcaption></figure>
+      <figure class="tile"><button class="vbox" type="button" aria-label="Enlarge: Left foot, instep, low"><video muted loop playsinline preload="none" poster="media/shoot/L_instep_low.jpg" data-src="media/shoot/L_instep_low.mp4"></video><span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span></button><figcaption>Left foot · Instep · Low</figcaption></figure>
+      <figure class="tile"><button class="vbox" type="button" aria-label="Enlarge: Right foot, inside, high"><video muted loop playsinline preload="none" poster="media/shoot/R_inside_high.jpg" data-src="media/shoot/R_inside_high.mp4"></video><span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span></button><figcaption>Right foot · Inside · High</figcaption></figure>
+      <figure class="tile"><button class="vbox" type="button" aria-label="Enlarge: Right foot, inside, low"><video muted loop playsinline preload="none" poster="media/shoot/R_inside_low.jpg" data-src="media/shoot/R_inside_low.mp4"></video><span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span></button><figcaption>Right foot · Inside · Low</figcaption></figure>
+      <figure class="tile"><button class="vbox" type="button" aria-label="Enlarge: Right foot, instep, high"><video muted loop playsinline preload="none" poster="media/shoot/R_instep_high.jpg" data-src="media/shoot/R_instep_high.mp4"></video><span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span></button><figcaption>Right foot · Instep · High</figcaption></figure>
+      <figure class="tile"><button class="vbox" type="button" aria-label="Enlarge: Right foot, instep, low"><video muted loop playsinline preload="none" poster="media/shoot/R_instep_low.jpg" data-src="media/shoot/R_instep_low.mp4"></video><span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span></button><figcaption>Right foot · Instep · Low</figcaption></figure>
+    </div>
+
+    <!-- goal corners; TODO(media): top right with the right foot has no render yet -->
+    <div class="grid g4 dense" id="shoot-corner" role="tabpanel" aria-labelledby="tab-corner" hidden>
+      <figure class="tile"><button class="vbox" type="button" aria-label="Enlarge: Top left, left foot"><video muted loop playsinline preload="none" poster="media/shoot/top_left_L.jpg" data-src="media/shoot/top_left_L.mp4"></video><span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span></button><figcaption>Top left · Left foot</figcaption></figure>
+      <figure class="tile"><button class="vbox" type="button" aria-label="Enlarge: Top left, right foot"><video muted loop playsinline preload="none" poster="media/shoot/top_left_R.jpg" data-src="media/shoot/top_left_R.mp4"></video><span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span></button><figcaption>Top left · Right foot</figcaption></figure>
+      <figure class="tile"><button class="vbox" type="button" aria-label="Enlarge: Top right, left foot"><video muted loop playsinline preload="none" poster="media/shoot/top_right_L.jpg" data-src="media/shoot/top_right_L.mp4"></video><span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span></button><figcaption>Top right · Left foot</figcaption></figure>
+      <figure class="tile"><button class="vbox" type="button" aria-label="Enlarge: Low left, left foot"><video muted loop playsinline preload="none" poster="media/shoot/low_left_L.jpg" data-src="media/shoot/low_left_L.mp4"></video><span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span></button><figcaption>Low left · Left foot</figcaption></figure>
+      <figure class="tile"><button class="vbox" type="button" aria-label="Enlarge: Low left, right foot"><video muted loop playsinline preload="none" poster="media/shoot/low_left_R.jpg" data-src="media/shoot/low_left_R.mp4"></video><span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span></button><figcaption>Low left · Right foot</figcaption></figure>
+      <figure class="tile"><button class="vbox" type="button" aria-label="Enlarge: Low right, left foot"><video muted loop playsinline preload="none" poster="media/shoot/low_right_L.jpg" data-src="media/shoot/low_right_L.mp4"></video><span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span></button><figcaption>Low right · Left foot</figcaption></figure>
+      <figure class="tile"><button class="vbox" type="button" aria-label="Enlarge: Low right, right foot"><video muted loop playsinline preload="none" poster="media/shoot/low_right_R.jpg" data-src="media/shoot/low_right_R.mp4"></video><span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span></button><figcaption>Low right · Right foot</figcaption></figure>
+    </div>
+
+    <!-- captions follow each clip's on-screen overlay -->
+    <div class="grid g4 dense" id="shoot-more" role="tabpanel" aria-labelledby="tab-more" hidden>
+      <figure class="tile"><button class="vbox" type="button" aria-label="Enlarge: Inside, left foot"><video muted loop playsinline preload="none" poster="media/shoot/more_L_left.jpg" data-src="media/shoot/more_L_left.mp4"></video><span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span></button><figcaption>Inside · Left foot</figcaption></figure>
+      <figure class="tile"><button class="vbox" type="button" aria-label="Enlarge: Instep, left foot"><video muted loop playsinline preload="none" poster="media/shoot/more_L_right.jpg" data-src="media/shoot/more_L_right.mp4"></video><span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span></button><figcaption>Instep · Left foot</figcaption></figure>
+      <figure class="tile"><button class="vbox" type="button" aria-label="Enlarge: Instep, right foot"><video muted loop playsinline preload="none" poster="media/shoot/more_R_left.jpg" data-src="media/shoot/more_R_left.mp4"></video><span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span></button><figcaption>Instep · Right foot</figcaption></figure>
+      <figure class="tile"><button class="vbox" type="button" aria-label="Enlarge: Inside, right foot"><video muted loop playsinline preload="none" poster="media/shoot/more_R_right.jpg" data-src="media/shoot/more_R_right.mp4"></video><span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span></button><figcaption>Inside · Right foot</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ TRANSITIONS ============ -->
+<section class="sec band" id="transitions" aria-labelledby="trans-h">
+  <div class="wrap">
+    <div class="head reveal">
+      <p class="eyebrow">Transitions</p>
+      <h2 class="h2" id="trans-h">Same handoff. Different outcome.</h2>
+      <p class="lede">Each row starts from one handoff state and runs it three ways, side by side.</p>
+    </div>
+
+    <!-- Four pre-composited, three-panel videos (titles and outcome badges are burned in).
+         Sources and encoding: build_media.py, entries "transitions/*". To add one, copy a <figure class="cmp">
+         and give its video a unique id. -->
+    <div class="compare">
+      <!-- column headers: one card per panel, aligned with the videos' thirds on desktop -->
+      <ol class="cmp-legend reveal">
+        <li><b>Direct switch</b><span>Control passes to the frozen student at the handover, with no adaptation.</span></li>
+        <li><b>Expert + STI fine-tune</b><span>The target skill's expert, fine-tuned with PPO from states the previous skill left behind, following PhysicsFC's skill-transition initialization.</span></li>
+        <li><b class="ours">Ours</b><span>The frozen student with the shared transition adapter.</span></li>
+      </ol>
+
+      <div class="cmp-list">
+        <figure class="cmp reveal">
+          <div class="cmp-scroll"><div class="vbox wide">
+            <video id="tr-ds064" muted loop playsinline preload="none"
+                   poster="media/transitions/dribble_shoot_req064.jpg" data-src="media/transitions/dribble_shoot_req064.mp4"
+                   aria-label="Dribble to shoot: direct switch, Expert plus STI fine-tune, and ours, side by side"></video>
+          </div></div>
+          <figcaption class="cmp-bar">
+            <!-- <span>Dribble → Shoot<span class="cmp-hint"> · swipe to see all three</span></span> -->
+            <span class="cmp-actions">
+              <button class="ctrl inline" type="button" aria-controls="tr-ds064" aria-label="Pause video"><svg class="i-pause" viewBox="0 0 16 16" fill="currentColor"><rect x="3.5" y="2.5" width="3" height="11" rx="1"/><rect x="9.5" y="2.5" width="3" height="11" rx="1"/></svg><svg class="i-play" viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 2.8v10.4a.8.8 0 0 0 1.2.7l8.2-5.2a.8.8 0 0 0 0-1.4L5.7 2.1a.8.8 0 0 0-1.2.7z"/></svg></button>
+              <button class="ctrl inline" type="button" data-lightbox-for="tr-ds064" data-caption="Dribble → Shoot · Direct switch / Expert + STI fine-tune / Ours" aria-label="Enlarge video"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></button>
+            </span>
+          </figcaption>
+        </figure>
+
+        <figure class="cmp reveal">
+          <div class="cmp-scroll"><div class="vbox wide">
+            <video id="tr-ds255" muted loop playsinline preload="none"
+                   poster="media/transitions/dribble_shoot_req255.jpg" data-src="media/transitions/dribble_shoot_req255.mp4"
+                   aria-label="A second dribble to shoot handoff: direct switch, Expert plus STI fine-tune, and ours, side by side"></video>
+          </div></div>
+          <figcaption class="cmp-bar">
+            <!-- <span>Dribble → Shoot</span> -->
+            <span class="cmp-actions">
+              <button class="ctrl inline" type="button" aria-controls="tr-ds255" aria-label="Pause video"><svg class="i-pause" viewBox="0 0 16 16" fill="currentColor"><rect x="3.5" y="2.5" width="3" height="11" rx="1"/><rect x="9.5" y="2.5" width="3" height="11" rx="1"/></svg><svg class="i-play" viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 2.8v10.4a.8.8 0 0 0 1.2.7l8.2-5.2a.8.8 0 0 0 0-1.4L5.7 2.1a.8.8 0 0 0-1.2.7z"/></svg></button>
+              <button class="ctrl inline" type="button" data-lightbox-for="tr-ds255" data-caption="Dribble → Shoot · Direct switch / Expert + STI fine-tune / Ours" aria-label="Enlarge video"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></button>
+            </span>
+          </figcaption>
+        </figure>
+
+        <figure class="cmp reveal">
+          <div class="cmp-scroll"><div class="vbox wide">
+            <video id="tr-sd196" muted loop playsinline preload="none"
+                   poster="media/transitions/stop_dribble_req196.jpg" data-src="media/transitions/stop_dribble_req196.mp4"
+                   aria-label="Stop to dribble: direct switch, Expert plus STI fine-tune, and ours, side by side"></video>
+          </div></div>
+          <figcaption class="cmp-bar">
+            <!-- <span>Stop → Dribble</span> -->
+            <span class="cmp-actions">
+              <button class="ctrl inline" type="button" aria-controls="tr-sd196" aria-label="Pause video"><svg class="i-pause" viewBox="0 0 16 16" fill="currentColor"><rect x="3.5" y="2.5" width="3" height="11" rx="1"/><rect x="9.5" y="2.5" width="3" height="11" rx="1"/></svg><svg class="i-play" viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 2.8v10.4a.8.8 0 0 0 1.2.7l8.2-5.2a.8.8 0 0 0 0-1.4L5.7 2.1a.8.8 0 0 0-1.2.7z"/></svg></button>
+              <button class="ctrl inline" type="button" data-lightbox-for="tr-sd196" data-caption="Stop → Dribble · Direct switch / Expert + STI fine-tune / Ours" aria-label="Enlarge video"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></button>
+            </span>
+          </figcaption>
+        </figure>
+
+        <figure class="cmp reveal">
+          <div class="cmp-scroll"><div class="vbox wide">
+            <video id="tr-gd205" muted loop playsinline preload="none"
+                   poster="media/transitions/getup_dribble_req205.jpg" data-src="media/transitions/getup_dribble_req205.mp4"
+                   aria-label="Get up to dribble: direct switch, Expert plus STI fine-tune, and ours, side by side"></video>
+          </div></div>
+          <figcaption class="cmp-bar">
+            <!-- <span>Get up → Dribble</span> -->
+            <span class="cmp-actions">
+              <button class="ctrl inline" type="button" aria-controls="tr-gd205" aria-label="Pause video"><svg class="i-pause" viewBox="0 0 16 16" fill="currentColor"><rect x="3.5" y="2.5" width="3" height="11" rx="1"/><rect x="9.5" y="2.5" width="3" height="11" rx="1"/></svg><svg class="i-play" viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 2.8v10.4a.8.8 0 0 0 1.2.7l8.2-5.2a.8.8 0 0 0 0-1.4L5.7 2.1a.8.8 0 0 0-1.2.7z"/></svg></button>
+              <button class="ctrl inline" type="button" data-lightbox-for="tr-gd205" data-caption="Get up → Dribble · Direct switch / Expert + STI fine-tune / Ours" aria-label="Enlarge video"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></button>
+            </span>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RESULTS ============ -->
+<!-- Numbers: paper Table 2 (transitions, native-policy columns) and Table 5 (continuous chains), copied as printed.
+     The charts are built by main.js from #results-data; the table view is built from the same data. -->
+<section class="sec" id="results" aria-labelledby="res-h">
+  <div class="wrap-mid">
+    <div class="head reveal">
+      <p class="eyebrow">Results</p>
+      <h2 class="h2" id="res-h">Better handoffs. Same skills.</h2>
+      <p class="lede">One shared adapter is the most successful on every transition and every chain,
+        and it leaves the native skills exactly where the student had them.</p>
+    </div>
+
+    <div class="seg-wrap">
+      <div class="seg" role="tablist" aria-label="Result tables" id="res-tabs">
+        <button role="tab" type="button" aria-selected="true" aria-controls="rs-transitions" id="rt-transitions">Transitions</button>
+        <button role="tab" type="button" aria-selected="false" aria-controls="rs-chains" id="rt-chains" tabindex="-1">Skill chains</button>
+        <button role="tab" type="button" aria-selected="false" aria-controls="rs-native" id="rt-native" tabindex="-1">Native skills</button>
+      </div>
+    </div>
+
+    <div class="results reveal" id="results-root">
+      <ul class="r-legend" id="res-legend" aria-label="Methods (hover to highlight)"></ul>
+      <div class="r-panel" id="rs-transitions" role="tabpanel" aria-labelledby="rt-transitions" data-set="transitions"></div>
+      <div class="r-panel" id="rs-chains" role="tabpanel" aria-labelledby="rt-chains" data-set="chains" hidden></div>
+      <div class="r-panel" id="rs-native" role="tabpanel" aria-labelledby="rt-native" data-set="native" hidden></div>
+      <div class="r-tip" id="res-tip" role="status" aria-live="polite" hidden></div>
+      <div class="r-foot">
+        <button class="r-tablebtn" type="button" aria-expanded="false" aria-controls="res-table">Show as a table</button>
+        <p class="fig-note">Paper Tables 2 and 5. Transitions start from identical predecessor-generated states;
+          chains are continuous episodes with no resets, 512 per chain.</p>
+      </div>
+      <div class="r-table" id="res-table" hidden></div>
+      <details class="r-about">
+        <summary>About the baselines</summary>
+        <dl>
+          <dt>Direct switch</dt><dd>The distilled student hands over with no adaptation.</dd>
+          <dt>Expert + STI</dt><dd>The target expert fine-tuned from predecessor-generated states (skill-transition initialization).</dd>
+          <dt>SkillX*</dt><dd>One multi-skill policy trained with in-episode skill switches on the same transitions.</dd>
+        </dl>
+      </details>
+    </div>
+  </div>
+</section>
+<script type="application/json" id="results-data">
+{
+  "methods": [
+    {"key": "ours",     "name": "Ours",           "full": "Ours",                    "color": "#2a78d6"},
+    {"key": "student",  "name": "Direct switch",  "full": "Student (direct switch)", "color": "#eb6834"},
+    {"key": "sti",      "name": "Expert + STI",   "full": "Expert + STI",            "color": "#1baf7a"},
+    {"key": "skillx",   "name": "SkillX*",        "full": "SkillX*",                 "color": "#eda100"}
+  ],
+  "transitions": {
+    "title": "Transition success (%) from identical handover states", "better": "higher", "max": 100, "unit": "%", "digits": 1,
+    "rows": [
+      {"label": "Dribble → Shoot",    "v": {"ours": 61.8, "student": 19.8, "sti": 54.1, "skillx": 2.7}},
+      {"label": "Stop → Dribble",     "v": {"ours": 97.0, "student": 44.1, "sti": 63.8, "skillx": 95.8}},
+      {"label": "Trap → Dribble",     "v": {"ours": 50.4, "student": 20.7, "sti": 27.7, "skillx": 47.9}},
+      {"label": "Get-up → Dribble",   "v": {"ours": 91.7, "student": 32.6, "sti": 55.7, "skillx": 91.3}},
+      {"label": "Off-ball → Dribble", "v": {"ours": 96.3, "student": 62.7, "sti": 59.8, "skillx": 83.9}}
+    ]
+  },
+  "chains": {
+    "title": "Complete-chain success (%), every stage in one continuous episode", "better": "higher", "max": 100, "unit": "%", "digits": 1,
+    "rows": [
+      {"label": "Dribble → Stop → Dribble → Shoot",            "v": {"ours": 97.5, "student": 41.8, "sti": 51.6, "skillx": 62.5}},
+      {"label": "Dribble → Stop → Dribble → Pass",             "v": {"ours": 97.7, "student": 38.5, "sti": 58.6, "skillx": 63.5}},
+      {"label": "Off-ball → Trap → Dribble → Shoot → Off-ball", "v": {"ours": 51.0, "student": 25.8, "sti": 33.2, "skillx": 6.6}},
+      {"label": "Off-ball → Trap → Dribble → Pass → Off-ball",  "v": {"ours": 50.6, "student": 23.8, "sti": 34.6, "skillx": 7.8}},
+      {"label": "Get-up → Dribble → Shoot → Off-ball",         "v": {"ours": 82.6, "student": 31.2, "sti": 51.6, "skillx": 58.0}}
+    ]
+  },
+  "native": {
+    "note": "Each deployed policy on the native cases of its skills. SkillX* is not reported.",
+    "charts": [
+      {"title": "Native shooting success (%)", "better": "higher", "max": 100, "unit": "%", "digits": 2,
+       "v": {"ours": 77.93, "student": 77.93, "sti": 63.09}},
+      {"title": "Native dribbling velocity error (m/s)", "better": "lower", "max": 3, "unit": " m/s", "digits": 3,
+       "v": {"ours": 2.104, "student": 2.104, "sti": 2.662}}
+    ]
+  }
+}
+</script>
+
+
+<!-- ============ LONG HORIZON ============ -->
+<section class="sec" id="long" aria-labelledby="long-h">
+  <div class="wrap">
+    <div class="head reveal">
+      <p class="eyebrow">Long horizon</p>
+      <h2 class="h2" id="long-h">Control that holds up.</h2>
+      <p class="lede">Long, uncut episodes, played back in real time.</p>
+    </div>
+
+    <div class="seg-wrap">
+      <div class="seg" role="tablist" aria-label="Long episodes">
+        <button role="tab" type="button" aria-selected="true"
+                data-src="media/long/dribble.mp4" data-poster="media/long/dribble.jpg"
+                data-label="Dribbling, one uncut episode">Dribble<span class="dur">25 s</span></button>
+        <button role="tab" type="button" aria-selected="false" tabindex="-1"
+                data-src="media/long/slalom.mp4" data-poster="media/long/slalom.jpg"
+                data-label="Dribbling a cone slalom, one uncut episode">Slalom<span class="dur">24 s</span></button>
+        <button role="tab" type="button" aria-selected="false" tabindex="-1"
+                data-src="media/long/offball.mp4" data-poster="media/long/offball.jpg"
+                data-label="Off-ball movement, one uncut episode">Off-ball<span class="dur">36 s</span></button>
+        <button role="tab" type="button" aria-selected="false" tabindex="-1"
+              data-src="media/long/all_corner_pass_and_header.mp4" data-poster="media/long/all_corner_pass_and_header.jpg"
+              data-label="Corner-kick cross followed by a header">Heading<span class="dur">11 s</span></button>
+      </div>
+    </div>
+
+    <div class="player reveal">
+      <div class="vbox lg" data-caption="Dribbling, one uncut episode">
+        <video id="long-video" muted loop playsinline preload="none"
+               poster="media/long/dribble.jpg" data-src="media/long/dribble.mp4"></video>
+        <button class="ctrl" type="button" aria-controls="long-video" aria-label="Pause video">
+          <svg class="i-pause" viewBox="0 0 16 16" fill="currentColor"><rect x="3.5" y="2.5" width="3" height="11" rx="1"/><rect x="9.5" y="2.5" width="3" height="11" rx="1"/></svg>
+          <svg class="i-play" viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 2.8v10.4a.8.8 0 0 0 1.2.7l8.2-5.2a.8.8 0 0 0 0-1.4L5.7 2.1a.8.8 0 0 0-1.2.7z"/></svg>
+        </button>
+      </div>
+      <div class="progress" aria-hidden="true"><i></i></div>
+      <div class="meta"><span class="l">Dribbling, one uncut episode</span><span class="t">0:00</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHAINING ============ -->
+<section class="sec band" id="chain" aria-labelledby="chain-h">
+  <div class="wrap">
+    <div class="head reveal">
+      <p class="eyebrow">Skill chaining</p>
+      <h2 class="h2" id="chain-h">One play. No cuts.</h2>
+      <p class="lede">Trap, dribble, stop and turn, dribble, shoot: one uninterrupted episode of our full
+        method. The teammate runs the same policy. It passes, then makes an off-ball run.</p>
+    </div>
+    <!-- our full method (student + transition adapter): tools/render_studio/ours_chain_rollout.py, picked by a fixed rule,
+         composed by prep_ours_chain_render.py; see output/studio/teaser_chain_ours/README.md -->
+    <div class="reveal">
+      <div class="vbox lg">
+        <video id="chain-video" muted loop playsinline preload="none"
+               poster="media/long/chain_public.jpg" data-src="media/long/chain_public.mp4"
+               aria-label="A teammate passes; the receiver traps, dribbles, stops and turns, dribbles and shoots into the goal while the teammate runs up the far side"></video>
+        <button class="ctrl" type="button" aria-controls="chain-video" aria-label="Pause video">
+          <svg class="i-pause" viewBox="0 0 16 16" fill="currentColor"><rect x="3.5" y="2.5" width="3" height="11" rx="1"/><rect x="9.5" y="2.5" width="3" height="11" rx="1"/></svg>
+          <svg class="i-play" viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 2.8v10.4a.8.8 0 0 0 1.2.7l8.2-5.2a.8.8 0 0 0 0-1.4L5.7 2.1a.8.8 0 0 0-1.2.7z"/></svg>
+        </button>
+      </div>
+      <!-- data-t = phase start in seconds on the video timeline (prep_ours_chain_render.py "phases"; the receive
+           scene's 0.1 s off-ball prefix is folded into Trap) -->
+      <ol class="flow" aria-label="Skill order; jump to a skill in the video" data-chips-for="chain-video">
+        <li><button type="button" data-t="0">Pass</button></li>
+        <li><button type="button" data-t="1.27">Trap</button></li>
+        <li><button type="button" data-t="2.28">Dribble</button></li>
+        <li><button type="button" data-t="4.3">Stop &amp; turn</button></li>
+        <li><button type="button" data-t="4.97">Dribble</button></li>
+        <li><button type="button" data-t="6.98">Shoot</button></li>
+        <li><button type="button" data-t="8.63">Off-ball</button></li>
+      </ol>
+      <p class="fig-note">Real time, uncut. The two players are separate episodes joined at the pass; the goal and the net are added at render time.</p>
+    </div>
+
+
+
+    <!-- Slalom and shoot -->
+    <div class="subhead reveal">
+      <h3>Slalom,  Shoot!</h3>
+      <p>Slalom dribbling followed by a shot on goal.</p>
+    </div>
+    <div class="reveal">
+      <div class="vbox lg">
+        <video id="drill-video" muted loop playsinline preload="none"
+               poster="media/long/slalom_shoot_long_horizon_public.jpg" data-src="media/long/slalom_shoot_long_horizon_public.mp4"
+               aria-label="Slalom dribbling followed by a shot on goal"></video>
+        <button class="ctrl" type="button" aria-controls="drill-video" aria-label="Pause video">
+          <svg class="i-pause" viewBox="0 0 16 16" fill="currentColor"><rect x="3.5" y="2.5" width="3" height="11" rx="1"/><rect x="9.5" y="2.5" width="3" height="11" rx="1"/></svg>
+          <svg class="i-play" viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 2.8v10.4a.8.8 0 0 0 1.2.7l8.2-5.2a.8.8 0 0 0 0-1.4L5.7 2.1a.8.8 0 0 0-1.2.7z"/></svg>
+        </button>
+      </div>
+      <!-- <p class="fig-note">Real time. Two co-simulated episodes share one ball, handed over at each kick;</p> -->
+    </div>
+
+
+    <!-- two-player passing drill: tools/render_studio/pass_drill_cosim.py + prep_drill_render.py;
+         see output/studio/pass_drill/README.md (the pick rule and every run) -->
+    <div class="subhead reveal">
+      <h3>Pass. Trap. Pass back.</h3>
+      <p>Two players face to face, both run by the same policy. Each traps the incoming ball, passes it back
+        and steps back to its spot.</p>
+    </div>
+    <div class="reveal">
+      <div class="vbox lg">
+        <video id="drill-video" muted loop playsinline preload="none"
+               poster="media/long/drill_public.jpg" data-src="media/long/drill_public.mp4"
+               aria-label="Two players pass a ball back and forth: each traps it, passes it back and returns to its spot"></video>
+        <button class="ctrl" type="button" aria-controls="drill-video" aria-label="Pause video">
+          <svg class="i-pause" viewBox="0 0 16 16" fill="currentColor"><rect x="3.5" y="2.5" width="3" height="11" rx="1"/><rect x="9.5" y="2.5" width="3" height="11" rx="1"/></svg>
+          <svg class="i-play" viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 2.8v10.4a.8.8 0 0 0 1.2.7l8.2-5.2a.8.8 0 0 0 0-1.4L5.7 2.1a.8.8 0 0 0-1.2.7z"/></svg>
+        </button>
+      </div>
+      <p class="fig-note">Real time. Two co-simulated episodes share one ball, handed over at each kick;</p>
+    </div>
+
+
+
+
+
+  </div>
+</section>
+
+<!-- ============ METHOD ============ -->
+<section class="sec" id="method" aria-labelledby="method-h">
+  <div class="wrap">
+    <div class="head reveal">
+      <p class="eyebrow">How it works</p>
+      <h2 class="h2" id="method-h">Integrate the experts.<br>Adapt the handoffs.</h2>
+    </div>
+    <figure class="fig framed reveal">
+      <img src="assets/img/pipeline.png" width="1750" height="1011" loading="lazy"
+           alt="MESSI overview. (a) Skill teachers trained with motion priors, task objectives and PPO form a teacher bank. (b) Multi-skill distillation into a student through behavioral cloning and DAgger. (c) The unified student: unified observation, skill embedding, masked transformer, actor MLP. (d) Transition adaptation: a LoRA on the frozen student trained with target reward from previous-skill and native start states.">
+      <figcaption>Method overview. <a href="assets/img/pipeline.png" target="_blank" rel="noopener">Open full size</a></figcaption>
+    </figure>
+    <div class="steps">
+      <div class="step reveal">
+        <span class="num">01</span>
+        <h3>Multiple skill experts</h3>
+        <p>Each skill is learned by its own expert, with a motion prior from reference motions,
+          task rewards and a skill-specific curriculum. Shooting is trained for accurate command
+          tracking, dribbling for stable ball control.</p>
+      </div>
+      <div class="step reveal">
+        <span class="num">02</span>
+        <h3>Multi-skill distillation</h3>
+        <p>A unified observation layout maps every expert's body, ball and command inputs into one
+          space. Behavioral cloning initializes a skill-conditioned transformer student; dataset
+          aggregation (DAgger) refines it with expert labels on the states the student visits.</p>
+      </div>
+      <div class="step reveal">
+        <span class="num">03</span>
+        <h3>Unified transition adaptation</h3>
+        <p>With the student frozen, an online, shared transition adaptation method using a 
+          context-conditioned low-rank adapter, enabling joint adaptation across multiple 
+          skill pairs without retraining individual experts.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ANOTHER BODY ============ -->
+<section class="sec" id="g1" aria-labelledby="g1-h">
+  <div class="wrap-mid">
+    <div class="head reveal">
+      <p class="eyebrow">Another body</p>
+      <h2 class="h2" id="g1-h">Dribbling on a Unitree G1.</h2>
+      <p class="lede">A simulated G1 humanoid dribbling, rendered in the same studio.</p>
+    </div>
+    <div class="grid g2">
+      <figure class="tile reveal"><button class="vbox" type="button" aria-label="Enlarge: Unitree G1 dribbling, clip 1"><video muted loop playsinline preload="none" poster="media/g1/dribble_1.jpg" data-src="media/g1/dribble_1.mp4"></video><span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span></button><figcaption>Unitree G1 · Dribbling</figcaption></figure>
+      <figure class="tile reveal"><button class="vbox" type="button" aria-label="Enlarge: Unitree G1 dribbling, clip 2"><video muted loop playsinline preload="none" poster="media/g1/dribble_2.jpg" data-src="media/g1/dribble_2.mp4"></video><span class="expand" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></span></button><figcaption>Unitree G1 · Dribbling</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CITATION ============ -->
+<section class="sec band" id="citation" aria-labelledby="cite-h">
+  <div class="wrap-copy">
+    <div class="head reveal">
+      <h2 class="h2" id="cite-h">Citation</h2>
+    </div>
+    <!-- TODO(bibtex): authors, venue, year -->
+    <div class="cite reveal">
+      <button class="copy" type="button">Copy</button>
+<pre><code>@inproceedings{messi,
+  title     = {MESSI: Multi-Expert Soccer Skill Integration
+               for Physics-Based Character Control},
+  author    = {TODO},
+  booktitle = {TODO},
+  year      = {TODO}
+}</code></pre>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>MESSI · Multi-Expert Soccer Skill Integration for Physics-Based Character Control</span>
+    <span>All clips are physics simulation, rendered offline.</span>
+  </div>
+</footer>
+
+<dialog class="lb" id="lightbox" aria-label="Enlarged video">
+  <video controls loop playsinline muted></video>
+  <div class="lb-bar"><span class="lb-cap"></span><button class="lb-close" type="button">Close</button></div>
+</dialog>
+</body>
+</html>

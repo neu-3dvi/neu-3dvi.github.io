@@ -1,0 +1,37 @@
+{
+  "duration": 23.4,
+  "segments": [
+    {
+      "label": "Off-ball",
+      "start": 0.0
+    },
+    {
+      "label": "Dribble",
+      "start": 3.5
+    },
+    {
+      "label": "Stop & turn",
+      "start": 7.0
+    },
+    {
+      "label": "Shoot",
+      "start": 10.5
+    },
+    {
+      "label": "Pass",
+      "start": 14.18
+    },
+    {
+      "label": "Trap",
+      "start": 16.46
+    },
+    {
+      "label": "Header",
+      "start": 17.9
+    },
+    {
+      "label": "Get up",
+      "start": 19.9
+    }
+  ]
+}
