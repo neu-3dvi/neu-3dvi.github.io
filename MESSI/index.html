@@ -15,10 +15,40 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/style.css">
-<script>document.documentElement.classList.add("js")</script>
+<script>
+  // decided before first paint: the entry page shows unless the URL already points somewhere (#hash) or says ?intro=0
+  (function (d) {
+    d.classList.add("js");
+    var open = !(location.hash.length > 1 || /[?&]intro=0\b/.test(location.search));
+    d.classList.add(open ? "intro-open" : "no-intro");
+    // the entry page always leads to the top of the page: a reload must not restore the old scroll position under it
+    if (open && "scrollRestoration" in history) history.scrollRestoration = "manual";
+  })(document.documentElement);
+</script>
 <script src="assets/js/main.js" defer></script>
 </head>
 <body>
+<!-- ============ ENTRY PAGE ============ -->
+<!-- Full-bleed video, dimmed, with the title centred and an Explore button; Explore, scroll, swipe up or the
+     down arrow lift it like a curtain onto the page below.
+     Links with a #hash, and ?intro=0, skip it. Without main.js the button reloads with ?intro=0.
+     Video: output/explainer_video/website_entry_video.mov (build_media.py "intro/entry"). -->
+<div class="intro" id="intro" role="dialog" aria-modal="true" aria-labelledby="intro-title">
+  <video class="intro-video" muted loop playsinline preload="auto" aria-hidden="true"
+         poster="media/intro/entry.jpg" data-src="media/intro/entry.mp4"></video>
+  <div class="intro-dim" aria-hidden="true"></div>
+  <div class="intro-content">
+    <p class="intro-title" id="intro-title">MESSI</p>
+    <p class="intro-sub">Multi-Expert Soccer Skill Integration for Physics-Based Character Control</p>
+    <a class="btn btn-primary intro-btn" href="?intro=0#top">Explore
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4v12M5 11l5 5 5-5"/></svg>
+    </a>
+  </div>
+  <div class="intro-hint" aria-hidden="true">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l5 5 5-5"/></svg>
+  </div>
+</div>
+
 <a class="skip" href="#main">Skip to content</a>
 
 <!-- ============ NAV ============ -->
@@ -475,7 +505,7 @@
                 data-src="media/long/offball.mp4" data-poster="media/long/offball.jpg"
                 data-label="Off-ball movement, one uncut episode">Off-ball<span class="dur">36 s</span></button>
         <button role="tab" type="button" aria-selected="false" tabindex="-1"
-              data-src="media/long/all_corner_pass_and_header.mp4" data-poster="media/long/all_corner_pass_and_header.jpg"
+              data-src="media/long/all_corner_pass_and_header.mp4" data-poster="media/long/offball.jpg"
               data-label="Corner-kick cross followed by a header">Heading<span class="dur">11 s</span></button>
       </div>
     </div>
@@ -501,55 +531,130 @@
     <div class="head reveal">
       <p class="eyebrow">Skill chaining</p>
       <h2 class="h2" id="chain-h">One play. No cuts.</h2>
-      <p class="lede">Trap, dribble, stop and turn, dribble, shoot: one uninterrupted episode of our full
-        method. The teammate runs the same policy. It passes, then makes an off-ball run.</p>
+      <p class="lede">Get up, trap, dribble, stop and turn, shoot, run off the ball. Each clip is one uninterrupted
+        episode of our full method; when it ends, the next one slides in.</p>
     </div>
-    <!-- our full method (student + transition adapter): tools/render_studio/ours_chain_rollout.py, picked by a fixed rule,
-         composed by prep_ours_chain_render.py; see output/studio/teaser_chain_ours/README.md -->
-    <div class="reveal">
-      <div class="vbox lg">
-        <video id="chain-video" muted loop playsinline preload="none"
-               poster="media/long/chain_public.jpg" data-src="media/long/chain_public.mp4"
-               aria-label="A teammate passes; the receiver traps, dribbles, stops and turns, dribbles and shoots into the goal while the teammate runs up the far side"></video>
-        <button class="ctrl" type="button" aria-controls="chain-video" aria-label="Pause video">
-          <svg class="i-pause" viewBox="0 0 16 16" fill="currentColor"><rect x="3.5" y="2.5" width="3" height="11" rx="1"/><rect x="9.5" y="2.5" width="3" height="11" rx="1"/></svg>
-          <svg class="i-play" viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 2.8v10.4a.8.8 0 0 0 1.2.7l8.2-5.2a.8.8 0 0 0 0-1.4L5.7 2.1a.8.8 0 0 0-1.2.7z"/></svg>
+    <!-- our full method (student + transition adapter), five episodes as a carousel (main.js "carousel"): each video
+         plays once, then the next slides in. Sources: build_media.py "long/chain*"; slide 1 =
+         output/studio/teaser_chain_ours/README.md, slides 2-5 = output/studio/teaser_chains_more/README.md (picked by a
+         fixed rule). Chip data-t = phase starts on the video timeline (render pkl "phases"); the receive scenes'
+         short off-ball prefix is folded into Trap. -->
+    <div class="carousel reveal" role="region" aria-roledescription="carousel" aria-label="Long skill chains">
+      <div class="car-track">
+        <div class="car-slide on" role="group" aria-roledescription="slide" aria-label="1 of 5: Pass, Trap, Dribble, Stop &amp; turn, Dribble, Shoot, Off-ball">
+          <div class="vbox lg">
+            <video id="chain-video" muted playsinline preload="none"
+                   poster="media/long/chain.jpg" data-src="media/long/chain.mp4"
+                   aria-label="A teammate passes; the receiver traps, dribbles, stops and turns, dribbles and shoots into the goal while the teammate runs up the far side"></video>
+            <button class="ctrl" type="button" aria-controls="chain-video" aria-label="Pause video">
+              <svg class="i-pause" viewBox="0 0 16 16" fill="currentColor"><rect x="3.5" y="2.5" width="3" height="11" rx="1"/><rect x="9.5" y="2.5" width="3" height="11" rx="1"/></svg>
+              <svg class="i-play" viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 2.8v10.4a.8.8 0 0 0 1.2.7l8.2-5.2a.8.8 0 0 0 0-1.4L5.7 2.1a.8.8 0 0 0-1.2.7z"/></svg>
+            </button>
+          </div>
+          <ol class="flow" aria-label="Skill order; jump to a skill in the video" data-chips-for="chain-video">
+            <li><button type="button" data-t="0">Pass</button></li>
+            <li><button type="button" data-t="1.27">Trap</button></li>
+            <li><button type="button" data-t="2.28">Dribble</button></li>
+            <li><button type="button" data-t="4.3">Stop &amp; turn</button></li>
+            <li><button type="button" data-t="4.97">Dribble</button></li>
+            <li><button type="button" data-t="6.98">Shoot</button></li>
+            <li><button type="button" data-t="8.63">Off-ball</button></li>
+          </ol>
+          <p class="fig-note">Real time, uncut. The teammate runs the same policy: it passes, then makes an off-ball run. The two players are separate episodes joined at the pass; the goal and the net are added at render time.</p>
+        </div>
+        <div class="car-slide" role="group" aria-roledescription="slide" aria-label="2 of 5: Dribble, Stop &amp; turn, Dribble, Shoot, Off-ball">
+          <div class="vbox lg">
+            <video id="chain-dsds" muted playsinline preload="none"
+                   poster="media/long/chain_dsds.jpg" data-src="media/long/chain_dsds.mp4"
+                   aria-label="The player dribbles out, stops and turns, dribbles back, shoots into the goal and runs off the ball"></video>
+            <button class="ctrl" type="button" aria-controls="chain-dsds" aria-label="Pause video">
+              <svg class="i-pause" viewBox="0 0 16 16" fill="currentColor"><rect x="3.5" y="2.5" width="3" height="11" rx="1"/><rect x="9.5" y="2.5" width="3" height="11" rx="1"/></svg>
+              <svg class="i-play" viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 2.8v10.4a.8.8 0 0 0 1.2.7l8.2-5.2a.8.8 0 0 0 0-1.4L5.7 2.1a.8.8 0 0 0-1.2.7z"/></svg>
+            </button>
+          </div>
+          <ol class="flow" aria-label="Skill order; jump to a skill in the video" data-chips-for="chain-dsds">
+            <li><button type="button" data-t="0">Dribble</button></li>
+            <li><button type="button" data-t="1.02">Stop &amp; turn</button></li>
+            <li><button type="button" data-t="2.38">Dribble</button></li>
+            <li><button type="button" data-t="4.4">Shoot</button></li>
+            <li><button type="button" data-t="5.9">Off-ball</button></li>
+          </ol>
+          <p class="fig-note">Real time, uncut. The goal and the net are added at render time.</p>
+        </div>
+        <div class="car-slide" role="group" aria-roledescription="slide" aria-label="3 of 5: Get-up, Dribble, Shoot, Off-ball">
+          <div class="vbox lg">
+            <video id="chain-gds" muted playsinline preload="none"
+                   poster="media/long/chain_gds.jpg" data-src="media/long/chain_gds.mp4"
+                   aria-label="The player gets up from the ground, dribbles, shoots into the goal and runs off the ball"></video>
+            <button class="ctrl" type="button" aria-controls="chain-gds" aria-label="Pause video">
+              <svg class="i-pause" viewBox="0 0 16 16" fill="currentColor"><rect x="3.5" y="2.5" width="3" height="11" rx="1"/><rect x="9.5" y="2.5" width="3" height="11" rx="1"/></svg>
+              <svg class="i-play" viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 2.8v10.4a.8.8 0 0 0 1.2.7l8.2-5.2a.8.8 0 0 0 0-1.4L5.7 2.1a.8.8 0 0 0-1.2.7z"/></svg>
+            </button>
+          </div>
+          <ol class="flow" aria-label="Skill order; jump to a skill in the video" data-chips-for="chain-gds">
+            <li><button type="button" data-t="0">Get-up</button></li>
+            <li><button type="button" data-t="2.17">Dribble</button></li>
+            <li><button type="button" data-t="4.18">Shoot</button></li>
+            <li><button type="button" data-t="5.67">Off-ball</button></li>
+          </ol>
+          <p class="fig-note">Real time, uncut. The goal and the net are added at render time.</p>
+        </div>
+        <div class="car-slide" role="group" aria-roledescription="slide" aria-label="4 of 5: Get-up, Dribble, Stop &amp; turn, Dribble, Shoot, Off-ball">
+          <div class="vbox lg">
+            <video id="chain-gdsds" muted playsinline preload="none"
+                   poster="media/long/chain_gdsds.jpg" data-src="media/long/chain_gdsds.mp4"
+                   aria-label="The player gets up from the ground, dribbles, stops and turns, dribbles back, shoots into the goal and runs off the ball"></video>
+            <button class="ctrl" type="button" aria-controls="chain-gdsds" aria-label="Pause video">
+              <svg class="i-pause" viewBox="0 0 16 16" fill="currentColor"><rect x="3.5" y="2.5" width="3" height="11" rx="1"/><rect x="9.5" y="2.5" width="3" height="11" rx="1"/></svg>
+              <svg class="i-play" viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 2.8v10.4a.8.8 0 0 0 1.2.7l8.2-5.2a.8.8 0 0 0 0-1.4L5.7 2.1a.8.8 0 0 0-1.2.7z"/></svg>
+            </button>
+          </div>
+          <ol class="flow" aria-label="Skill order; jump to a skill in the video" data-chips-for="chain-gdsds">
+            <li><button type="button" data-t="0">Get-up</button></li>
+            <li><button type="button" data-t="2.07">Dribble</button></li>
+            <li><button type="button" data-t="4.08">Stop &amp; turn</button></li>
+            <li><button type="button" data-t="4.68">Dribble</button></li>
+            <li><button type="button" data-t="6.7">Shoot</button></li>
+            <li><button type="button" data-t="8.27">Off-ball</button></li>
+          </ol>
+          <p class="fig-note">Real time, uncut. The goal and the net are added at render time.</p>
+        </div>
+        <div class="car-slide" role="group" aria-roledescription="slide" aria-label="5 of 5: Pass, Trap, Dribble, Shoot, Off-ball">
+          <div class="vbox lg">
+            <video id="chain-otds" muted playsinline preload="none"
+                   poster="media/long/chain_otds.jpg" data-src="media/long/chain_otds.mp4"
+                   aria-label="A passer plays the ball in; the receiver traps it, dribbles, shoots into the goal and runs off the ball"></video>
+            <button class="ctrl" type="button" aria-controls="chain-otds" aria-label="Pause video">
+              <svg class="i-pause" viewBox="0 0 16 16" fill="currentColor"><rect x="3.5" y="2.5" width="3" height="11" rx="1"/><rect x="9.5" y="2.5" width="3" height="11" rx="1"/></svg>
+              <svg class="i-play" viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 2.8v10.4a.8.8 0 0 0 1.2.7l8.2-5.2a.8.8 0 0 0 0-1.4L5.7 2.1a.8.8 0 0 0-1.2.7z"/></svg>
+            </button>
+          </div>
+          <ol class="flow" aria-label="Skill order; jump to a skill in the video" data-chips-for="chain-otds">
+            <li><button type="button" data-t="0">Pass</button></li>
+            <li><button type="button" data-t="0.3">Trap</button></li>
+            <li><button type="button" data-t="1.37">Dribble</button></li>
+            <li><button type="button" data-t="3.38">Shoot</button></li>
+            <li><button type="button" data-t="5">Off-ball</button></li>
+          </ol>
+          <p class="fig-note">Real time, uncut. The passer is a separate episode of the pass expert, joined at the pass; the goal and the net are added at render time.</p>
+        </div>
+      </div>
+      <div class="car-nav">
+        <button class="car-arrow" type="button" data-dir="-1" aria-label="Previous chain">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5L6.5 10l5.5 5.5"/></svg>
+        </button>
+        <div class="car-dots">
+          <button class="car-dot" type="button" aria-label="Chain 1: Pass, Trap, Dribble, Stop &amp; turn, Dribble, Shoot, Off-ball" aria-current="true"><i></i></button>
+          <button class="car-dot" type="button" aria-label="Chain 2: Dribble, Stop &amp; turn, Dribble, Shoot, Off-ball"><i></i></button>
+          <button class="car-dot" type="button" aria-label="Chain 3: Get-up, Dribble, Shoot, Off-ball"><i></i></button>
+          <button class="car-dot" type="button" aria-label="Chain 4: Get-up, Dribble, Stop &amp; turn, Dribble, Shoot, Off-ball"><i></i></button>
+          <button class="car-dot" type="button" aria-label="Chain 5: Pass, Trap, Dribble, Shoot, Off-ball"><i></i></button>
+        </div>
+        <button class="car-arrow" type="button" data-dir="1" aria-label="Next chain">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4.5l5.5 5.5L8 15.5"/></svg>
         </button>
       </div>
-      <!-- data-t = phase start in seconds on the video timeline (prep_ours_chain_render.py "phases"; the receive
-           scene's 0.1 s off-ball prefix is folded into Trap) -->
-      <ol class="flow" aria-label="Skill order; jump to a skill in the video" data-chips-for="chain-video">
-        <li><button type="button" data-t="0">Pass</button></li>
-        <li><button type="button" data-t="1.27">Trap</button></li>
-        <li><button type="button" data-t="2.28">Dribble</button></li>
-        <li><button type="button" data-t="4.3">Stop &amp; turn</button></li>
-        <li><button type="button" data-t="4.97">Dribble</button></li>
-        <li><button type="button" data-t="6.98">Shoot</button></li>
-        <li><button type="button" data-t="8.63">Off-ball</button></li>
-      </ol>
-      <p class="fig-note">Real time, uncut. The two players are separate episodes joined at the pass; the goal and the net are added at render time.</p>
     </div>
-
-
-
-    <!-- Slalom and shoot -->
-    <div class="subhead reveal">
-      <h3>Slalom,  Shoot!</h3>
-      <p>Slalom dribbling followed by a shot on goal.</p>
-    </div>
-    <div class="reveal">
-      <div class="vbox lg">
-        <video id="drill-video" muted loop playsinline preload="none"
-               poster="media/long/slalom_shoot_long_horizon_public.jpg" data-src="media/long/slalom_shoot_long_horizon_public.mp4"
-               aria-label="Slalom dribbling followed by a shot on goal"></video>
-        <button class="ctrl" type="button" aria-controls="drill-video" aria-label="Pause video">
-          <svg class="i-pause" viewBox="0 0 16 16" fill="currentColor"><rect x="3.5" y="2.5" width="3" height="11" rx="1"/><rect x="9.5" y="2.5" width="3" height="11" rx="1"/></svg>
-          <svg class="i-play" viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 2.8v10.4a.8.8 0 0 0 1.2.7l8.2-5.2a.8.8 0 0 0 0-1.4L5.7 2.1a.8.8 0 0 0-1.2.7z"/></svg>
-        </button>
-      </div>
-      <!-- <p class="fig-note">Real time. Two co-simulated episodes share one ball, handed over at each kick;</p> -->
-    </div>
-
 
     <!-- two-player passing drill: tools/render_studio/pass_drill_cosim.py + prep_drill_render.py;
          see output/studio/pass_drill/README.md (the pick rule and every run) -->
@@ -561,7 +666,7 @@
     <div class="reveal">
       <div class="vbox lg">
         <video id="drill-video" muted loop playsinline preload="none"
-               poster="media/long/drill_public.jpg" data-src="media/long/drill_public.mp4"
+               poster="media/long/drill.jpg" data-src="media/long/drill.mp4"
                aria-label="Two players pass a ball back and forth: each traps it, passes it back and returns to its spot"></video>
         <button class="ctrl" type="button" aria-controls="drill-video" aria-label="Pause video">
           <svg class="i-pause" viewBox="0 0 16 16" fill="currentColor"><rect x="3.5" y="2.5" width="3" height="11" rx="1"/><rect x="9.5" y="2.5" width="3" height="11" rx="1"/></svg>
@@ -570,11 +675,6 @@
       </div>
       <p class="fig-note">Real time. Two co-simulated episodes share one ball, handed over at each kick;</p>
     </div>
-
-
-
-
-
   </div>
 </section>
 
@@ -586,9 +686,9 @@
       <h2 class="h2" id="method-h">Integrate the experts.<br>Adapt the handoffs.</h2>
     </div>
     <figure class="fig framed reveal">
-      <img src="assets/img/pipeline.png" width="1750" height="1011" loading="lazy"
+      <img src="assets/img/pipeline_v2.png" width="1750" height="1011" loading="lazy"
            alt="MESSI overview. (a) Skill teachers trained with motion priors, task objectives and PPO form a teacher bank. (b) Multi-skill distillation into a student through behavioral cloning and DAgger. (c) The unified student: unified observation, skill embedding, masked transformer, actor MLP. (d) Transition adaptation: a LoRA on the frozen student trained with target reward from previous-skill and native start states.">
-      <figcaption>Method overview. <a href="assets/img/pipeline.png" target="_blank" rel="noopener">Open full size</a></figcaption>
+      <figcaption>Method overview. <a href="assets/img/pipeline_v2.png" target="_blank" rel="noopener">Open full size</a></figcaption>
     </figure>
     <div class="steps">
       <div class="step reveal">

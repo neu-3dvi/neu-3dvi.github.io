@@ -22,11 +22,15 @@
     if (p) p.catch(() => {});
   };
   const visible = new WeakSet();
+  const root = document.documentElement;
+  // while the entry page covers the screen, the page's own videos wait (they are "visible" under it)
+  const held = (v) => root.classList.contains("intro-open") && !v.closest("#intro");
   const io = new IntersectionObserver((entries) => {
     for (const e of entries) {
       const v = e.target;
       if (e.isIntersecting) {
         visible.add(v);
+        if (held(v)) continue;
         loadSrc(v);
         tryPlay(v);
       } else {
@@ -35,11 +39,73 @@
       }
     }
   }, { rootMargin: "200px 0px", threshold: 0.15 });
+  // carousel videos are not observed here: the carousel plays only its active slide (see "carousel" below)
+  const lazy = (v) => !v.closest(".carousel");
   $$("video[data-src]").forEach((v) => {
     v.muted = true;            // required for autoplay; the renders have no audio anyway
     v.playsInline = true;
-    io.observe(v);
+    if (lazy(v)) io.observe(v);
   });
+  const onEnter = [];          // hooks run when the entry page lifts (the carousels re-check their visibility)
+
+  /* ---------- entry page: Explore (or scroll / swipe up / ↓ / Space) lifts it onto the page ---------- */
+  const intro = $("#intro");
+  if (intro) {
+    const behind = [...document.body.children].filter((e) => e !== intro && e.tagName !== "SCRIPT");
+    const inert = (on) => behind.forEach((e) => (on ? e.setAttribute("inert", "") : e.removeAttribute("inert")));
+    let leaving = false;
+    const top0 = () => scrollTo({ top: 0, left: 0, behavior: "instant" });
+    // the wheel gesture that opened the page keeps sending (momentum) events: swallow them until it goes quiet
+    // for 300 ms, so the page does not scroll on past its top as the curtain lifts
+    let lastWheel = 0;
+    const swallow = (e) => {
+      const now = performance.now();
+      if (now - lastWheel < 300) { lastWheel = now; e.preventDefault(); }
+      else removeEventListener("wheel", swallow, { passive: false });
+    };
+    const enter = () => {
+      if (leaving || !root.classList.contains("intro-open")) return;
+      leaving = true;
+      top0();
+      root.classList.add("intro-lock");      // no scrolling (touch momentum included) while the curtain lifts
+      lastWheel = performance.now();
+      addEventListener("wheel", swallow, { passive: false });
+      inert(false);
+      intro.classList.add("leaving");
+      root.classList.remove("intro-open");
+      // the page's videos may start now: re-observe so the ones already in view get their initial callback
+      $$("video[data-src]").forEach((v) => { if (!v.closest("#intro") && lazy(v)) { io.unobserve(v); io.observe(v); } });
+      onEnter.forEach((f) => f());
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        intro.hidden = true;
+        root.classList.remove("intro-lock");
+        const iv = $("video", intro);
+        if (iv) iv.pause();
+      };
+      if (reduce) finish();
+      else { intro.addEventListener("transitionend", (e) => { if (e.target === intro) finish(); }); setTimeout(finish, 1500); }
+    };
+    if (root.classList.contains("intro-open")) {
+      inert(true);            // no auto-focus (it would draw a focus ring on load); Tab reaches Explore first
+      top0();                 // (scroll restoration is off, see <head>; this covers browsers that restore anyway)
+    } else {
+      intro.hidden = true;
+    }
+    $(".intro-btn", intro).addEventListener("click", (e) => { e.preventDefault(); enter(); });
+    intro.addEventListener("wheel", (e) => { if (e.deltaY > 6) enter(); }, { passive: true });
+    let y0 = null;
+    intro.addEventListener("touchstart", (e) => { y0 = e.touches[0].clientY; }, { passive: true });
+    intro.addEventListener("touchmove", (e) => { if (y0 != null && y0 - e.touches[0].clientY > 40) enter(); }, { passive: true });
+    document.addEventListener("keydown", (e) => {
+      if (root.classList.contains("intro-open") && ["ArrowDown", "PageDown", " ", "Enter"].includes(e.key)) {
+        e.preventDefault();
+        enter();
+      }
+    });
+  }
 
   /* swap a video's source (variants, tabs) and keep playing if it is on screen */
   const swap = (v, src, poster) => {
@@ -98,6 +164,111 @@
       mark();
     }));
     mark();
+  });
+
+  /* ---------- carousel: one slide at a time; the active video plays once (no loop), then the next slides in.
+     It plays only while the carousel is on screen (and the entry page is gone); the next video is preloaded
+     while the current one plays. ---------- */
+  $$(".carousel").forEach((car) => {
+    const track = $(".car-track", car);
+    const slides = $$(".car-slide", car);
+    const vids = slides.map((s) => $("video", s));
+    const dots = $$(".car-dot", car);
+    const n = slides.length;
+    let i = 0, inView = false, raf = 0;
+    const live = () => inView && !held(car);
+    const focusables = (s) => $$("button, a[href], [tabindex]", s);
+    const layout = () => {
+      track.style.setProperty("--i", i);
+      slides.forEach((s, k) => {
+        const on = k === i;
+        s.classList.toggle("on", on);
+        if (on) s.removeAttribute("aria-hidden"); else s.setAttribute("aria-hidden", "true");
+        focusables(s).forEach((el) => (on ? el.removeAttribute("tabindex") : el.setAttribute("tabindex", "-1")));
+      });
+      dots.forEach((d, k) => {
+        if (k === i) d.setAttribute("aria-current", "true"); else d.removeAttribute("aria-current");
+        $("i", d).style.setProperty("--p", 0);
+      });
+    };
+    const tick = () => {
+      const v = vids[i];
+      if (v.duration) $("i", dots[i]).style.setProperty("--p", Math.min(1, v.currentTime / v.duration));
+      raf = v.paused ? 0 : requestAnimationFrame(tick);
+    };
+    const play = () => { if (live()) tryPlay(vids[i]); };
+    const go = (k) => {
+      k = ((k % n) + n) % n;
+      if (k === i) return;
+      const old = vids[i];
+      old.pause();
+      i = k;
+      layout();
+      const v = vids[i];
+      delete v.dataset.userPaused;       // choosing a slide is a request to watch it
+      if (v.readyState > 0) v.currentTime = 0;
+      play();
+      // rewind the one that left once it is off to the side
+      setTimeout(() => { if (old !== vids[i] && old.readyState > 0) old.currentTime = 0; }, 800);
+    };
+    vids.forEach((v, k) => {
+      v.addEventListener("ended", () => { if (k === i && !reduce) go(i + 1); });
+      v.addEventListener("play", () => { if (k === i && !raf) raf = requestAnimationFrame(tick); });
+      v.addEventListener("seeked", () => { if (k === i) tick(); });
+      v.addEventListener("playing", () => { if (k === i && live()) loadSrc(vids[(i + 1) % n]); });
+    });
+    $$(".car-arrow", car).forEach((b) => b.addEventListener("click", () => go(i + Number(b.dataset.dir))));
+    dots.forEach((d, k) => d.addEventListener("click", () => go(k)));
+    slides.forEach((s, k) => s.addEventListener("click", () => { if (k !== i) go(k); }));
+    car.addEventListener("keydown", (e) => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      e.preventDefault();
+      go(i + (e.key === "ArrowRight" ? 1 : -1));
+    });
+    // swipe / drag: the track follows the pointer; past 15 % of the width (or a flick) it moves one slide
+    let x0 = null, y0 = 0, t0 = 0, dx = 0, dragging = false, swallow = false;
+    track.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return;
+      x0 = e.clientX; y0 = e.clientY; t0 = performance.now(); dx = 0; dragging = false;
+    });
+    track.addEventListener("pointermove", (e) => {
+      if (x0 == null) return;
+      dx = e.clientX - x0;
+      if (!dragging) {
+        if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(e.clientY - y0)) return;
+        dragging = true;
+        track.classList.add("dragging");
+        track.setPointerCapture(e.pointerId);
+      }
+      track.style.transform = `translateX(calc(${i} * -1 * (100% + var(--car-gap)) + ${dx}px))`;
+    });
+    const release = () => {
+      if (x0 == null) return;
+      x0 = null;
+      if (!dragging) return;
+      dragging = false;
+      swallow = true;                    // the click that ends a drag is not a click on a slide or a chip
+      setTimeout(() => (swallow = false), 0);
+      track.classList.remove("dragging");
+      track.style.transform = "";
+      const w = track.getBoundingClientRect().width;
+      const fast = Math.abs(dx) / Math.max(1, performance.now() - t0) > 0.5;
+      if (Math.abs(dx) > w * 0.15 || (fast && Math.abs(dx) > 30)) go(i + (dx < 0 ? 1 : -1));
+    };
+    track.addEventListener("pointerup", release);
+    track.addEventListener("pointercancel", release);
+    track.addEventListener("click", (e) => { if (swallow) { e.stopPropagation(); e.preventDefault(); } }, true);
+    track.addEventListener("dragstart", (e) => e.preventDefault());
+    // visibility: the active video plays while the carousel is on screen
+    const cio = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        inView = e.isIntersecting;
+        if (live()) play(); else if (!vids[i].paused) vids[i].pause();
+      }
+    }, { threshold: 0.2 });
+    cio.observe(car);
+    onEnter.push(() => { cio.unobserve(car); cio.observe(car); });
+    layout();
   });
 
   /* ---------- skill-card variants ---------- */
